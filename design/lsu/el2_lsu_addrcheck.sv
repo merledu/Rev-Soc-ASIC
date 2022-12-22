@@ -25,7 +25,7 @@
 module el2_lsu_addrcheck
 import el2_pkg::*;
 #(
-`include "el2_param.vh"
+parameter A=0
  )(
    input logic          lsu_c2_m_clk,              // clock
    input logic          rst_l,                     // reset

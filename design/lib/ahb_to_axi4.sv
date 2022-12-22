@@ -24,7 +24,7 @@ module ahb_to_axi4
 import el2_pkg::*;
 #(
    TAG = 1,
-   `include "el2_param.vh"
+   parameter A=0
 )
 //   ,TAG  = 1)
 (

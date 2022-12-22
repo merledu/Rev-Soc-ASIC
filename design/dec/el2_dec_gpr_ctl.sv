@@ -16,7 +16,7 @@
 module el2_dec_gpr_ctl
 import el2_pkg::*;
 #(
-   `include "el2_param.vh"
+   parameter A=0
  )  (
     input logic [4:0]  raddr0,       // logical read addresses
     input logic [4:0]  raddr1,

@@ -23,7 +23,7 @@
 module el2_swerv_wrapper
 import el2_pkg::*;
  #(
-`include "el2_param.vh"
+parameter A=0
 )
 (
    input logic                             clk,
@@ -33,20 +33,21 @@ import el2_pkg::*;
    input logic                             nmi_int,
    input logic [31:1]                      nmi_vec,
    input logic [31:1]                      jtag_id,
+   input logic reset,
 
 
    output logic [31:0]                     trace_rv_i_insn_ip,
+   output  logic TIMER_irq_o,
    output logic [31:0]                     trace_rv_i_address_ip,
    output logic                            trace_rv_i_valid_ip,
    output logic                            trace_rv_i_exception_ip,
    output logic [4:0]                      trace_rv_i_ecause_ip,
    output logic                            trace_rv_i_interrupt_ip,
    output logic [31:0]                     trace_rv_i_tval_ip,
-   output logic                            TIMER_irq_o,
-
+   output logic pwm_led, pwm_en,
 
    // Bus signals
-`ifdef RV_BUILD_AXI4
+
    //-------------------------- LSU AXI signals--------------------------
    // AXI Write Channels
    output logic                            lsu_axi_awvalid_o,
@@ -224,68 +225,14 @@ import el2_pkg::*;
    output logic                            dma_axi_rvalid,
    input  logic                            dma_axi_rready,
    output logic [pt.DMA_BUS_TAG-1:0]       dma_axi_rid,
+   input  logic rx_i,
+   output logic tx_o,  
    output logic [63:0]                     dma_axi_rdata,
    output logic [1:0]                      dma_axi_rresp,
    output logic                            dma_axi_rlast,
-`endif
 
-`ifdef RV_BUILD_AHB_LITE
- //// AHB LITE BUS
-   output logic [31:0]                     haddr,
-   output logic [2:0]                      hburst,
-   output logic                            hmastlock,
-   output logic [3:0]                      hprot,
-   output logic [2:0]                      hsize,
-   output logic [1:0]                      htrans,
-   output logic                            hwrite,
 
-   input logic [63:0]                      hrdata,
-   input logic                             hready,
-   input logic                             hresp,
 
-   // LSU AHB Master
-   output logic [31:0]                     lsu_haddr,
-   output logic [2:0]                      lsu_hburst,
-   output logic                            lsu_hmastlock,
-   output logic [3:0]                      lsu_hprot,
-   output logic [2:0]                      lsu_hsize,
-   output logic [1:0]                      lsu_htrans,
-   output logic                            lsu_hwrite,
-   output logic [63:0]                     lsu_hwdata,
-
-   input logic [63:0]                      lsu_hrdata,
-   input logic                             lsu_hready,
-   input logic                             lsu_hresp,
-   // Debug Syster Bus AHB
-   output logic [31:0]                     sb_haddr,
-   output logic [2:0]                      sb_hburst,
-   output logic                            sb_hmastlock,
-   output logic [3:0]                      sb_hprot,
-   output logic [2:0]                      sb_hsize,
-   output logic [1:0]                      sb_htrans,
-   output logic                            sb_hwrite,
-   output logic [63:0]                     sb_hwdata,
-
-   input  logic [63:0]                     sb_hrdata,
-   input  logic                            sb_hready,
-   input  logic                            sb_hresp,
-
-   // DMA Slave
-   input logic                             dma_hsel,
-   input logic [31:0]                      dma_haddr,
-   input logic [2:0]                       dma_hburst,
-   input logic                             dma_hmastlock,
-   input logic [3:0]                       dma_hprot,
-   input logic [2:0]                       dma_hsize,
-   input logic [1:0]                       dma_htrans,
-   input logic                             dma_hwrite,
-   input logic [63:0]                      dma_hwdata,
-   input logic                             dma_hreadyin,
-
-   output logic [63:0]                     dma_hrdata,
-   output logic                            dma_hreadyout,
-   output logic                            dma_hresp,
-`endif
    // clk ratio signals
    input logic                             lsu_bus_clk_en, // Clock ratio b/w cpu core clk & AHB master interface
    input logic                             ifu_bus_clk_en, // Clock ratio b/w cpu core clk & AHB master interface
@@ -332,7 +279,9 @@ import el2_pkg::*;
    input logic                             i_cpu_run_req, // Async restart req to CPU
    output logic                            o_cpu_run_ack, // Core response to run req
    input logic                             scan_mode,     // To enable scan mode
-   input logic                             mbist_mode     // to enable mbist
+   input logic                             mbist_mode,     // to enable mbist
+   output logic pin0,pin1,pin2,pin3,pin4,
+   input logic in0,in1,in2,in3,in4
 );
 
    logic                             active_l2clk;
@@ -395,6 +344,7 @@ import el2_pkg::*;
    logic [77:0]    iccm_rd_data_ecc;
 
    logic        core_rst_l;                         // Core reset including rst_l and dbg_rst_l
+//   logic        core_rst;                         // Core reset including rst_l and dbg_rst_l
    logic        jtag_tdoEn;
 
    logic        dccm_clk_override;
@@ -403,7 +353,6 @@ import el2_pkg::*;
 
 
    // zero out the signals not presented at the wrapper instantiation level
-`ifdef RV_BUILD_AXI4
 
  //// AHB LITE BUS
    logic [31:0]              haddr;
@@ -488,197 +437,7 @@ import el2_pkg::*;
    assign  dma_hwdata[63:0]                       = '0;
    assign  dma_hreadyin                           = '0;
 
-`endif //  `ifdef RV_BUILD_AXI4
 
-
-`ifdef RV_BUILD_AHB_LITE
-   wire                            lsu_axi_awvalid;
-   wire                            lsu_axi_awready;
-   wire [pt.LSU_BUS_TAG-1:0]       lsu_axi_awid;
-   wire [31:0]                     lsu_axi_awaddr;
-   wire [3:0]                      lsu_axi_awregion;
-   wire [7:0]                      lsu_axi_awlen;
-   wire [2:0]                      lsu_axi_awsize;
-   wire [1:0]                      lsu_axi_awburst;
-   wire                            lsu_axi_awlock;
-   wire [3:0]                      lsu_axi_awcache;
-   wire [2:0]                      lsu_axi_awprot;
-   wire [3:0]                      lsu_axi_awqos;
-
-   wire                            lsu_axi_wvalid;
-   wire                            lsu_axi_wready;
-   wire [63:0]                     lsu_axi_wdata;
-   wire [7:0]                      lsu_axi_wstrb;
-   wire                            lsu_axi_wlast;
-
-   wire                            lsu_axi_bvalid;
-   wire                            lsu_axi_bready;
-   wire [1:0]                      lsu_axi_bresp;
-   wire [pt.LSU_BUS_TAG-1:0]       lsu_axi_bid;
-
-   // AXI Read Channels
-   wire                            lsu_axi_arvalid;
-   wire                            lsu_axi_arready;
-   wire [pt.LSU_BUS_TAG-1:0]       lsu_axi_arid;
-   wire [31:0]                     lsu_axi_araddr;
-   wire [3:0]                      lsu_axi_arregion;
-   wire [7:0]                      lsu_axi_arlen;
-   wire [2:0]                      lsu_axi_arsize;
-   wire [1:0]                      lsu_axi_arburst;
-   wire                            lsu_axi_arlock;
-   wire [3:0]                      lsu_axi_arcache;
-   wire [2:0]                      lsu_axi_arprot;
-   wire [3:0]                      lsu_axi_arqos;
-
-   wire                            lsu_axi_rvalid;
-   wire                            lsu_axi_rready;
-   wire [pt.LSU_BUS_TAG-1:0]       lsu_axi_rid;
-   wire [63:0]                     lsu_axi_rdata;
-   wire [1:0]                      lsu_axi_rresp;
-   wire                            lsu_axi_rlast;
-
-   //-------------------------- IFU AXI signals--------------------------
-   // AXI Write Channels
-   wire                            ifu_axi_awvalid;
-   wire                            ifu_axi_awready;
-   wire [pt.IFU_BUS_TAG-1:0]       ifu_axi_awid;
-   wire [31:0]                     ifu_axi_awaddr;
-   wire [3:0]                      ifu_axi_awregion;
-   wire [7:0]                      ifu_axi_awlen;
-   wire [2:0]                      ifu_axi_awsize;
-   wire [1:0]                      ifu_axi_awburst;
-   wire                            ifu_axi_awlock;
-   wire [3:0]                      ifu_axi_awcache;
-   wire [2:0]                      ifu_axi_awprot;
-   wire [3:0]                      ifu_axi_awqos;
-
-   wire                            ifu_axi_wvalid;
-   wire                            ifu_axi_wready;
-   wire [63:0]                     ifu_axi_wdata;
-   wire [7:0]                      ifu_axi_wstrb;
-   wire                            ifu_axi_wlast;
-
-   wire                            ifu_axi_bvalid;
-   wire                            ifu_axi_bready;
-   wire [1:0]                      ifu_axi_bresp;
-   wire [pt.IFU_BUS_TAG-1:0]      ifu_axi_bid;
-
-   // AXI Read Channels
-   wire                            ifu_axi_arvalid;
-   wire                            ifu_axi_arready;
-   wire [pt.IFU_BUS_TAG-1:0]       ifu_axi_arid;
-   wire [31:0]                     ifu_axi_araddr;
-   wire [3:0]                      ifu_axi_arregion;
-   wire [7:0]                      ifu_axi_arlen;
-   wire [2:0]                      ifu_axi_arsize;
-   wire [1:0]                      ifu_axi_arburst;
-   wire                            ifu_axi_arlock;
-   wire [3:0]                      ifu_axi_arcache;
-   wire [2:0]                      ifu_axi_arprot;
-   wire [3:0]                      ifu_axi_arqos;
-
-   wire                            ifu_axi_rvalid;
-   wire                            ifu_axi_rready;
-   wire [pt.IFU_BUS_TAG-1:0]       ifu_axi_rid;
-   wire [63:0]                     ifu_axi_rdata;
-   wire [1:0]                      ifu_axi_rresp;
-   wire                            ifu_axi_rlast;
-
-   //-------------------------- SB AXI signals--------------------------
-   // AXI Write Channels
-   wire                            sb_axi_awvalid;
-   wire                            sb_axi_awready;
-   wire [pt.SB_BUS_TAG-1:0]        sb_axi_awid;
-   wire [31:0]                     sb_axi_awaddr;
-   wire [3:0]                      sb_axi_awregion;
-   wire [7:0]                      sb_axi_awlen;
-   wire [2:0]                      sb_axi_awsize;
-   wire [1:0]                      sb_axi_awburst;
-   wire                            sb_axi_awlock;
-   wire [3:0]                      sb_axi_awcache;
-   wire [2:0]                      sb_axi_awprot;
-   wire [3:0]                      sb_axi_awqos;
-
-   wire                            sb_axi_wvalid;
-   wire                            sb_axi_wready;
-   wire [63:0]                     sb_axi_wdata;
-   wire [7:0]                      sb_axi_wstrb;
-   wire                            sb_axi_wlast;
-
-   wire                            sb_axi_bvalid;
-   wire                            sb_axi_bready;
-   wire [1:0]                      sb_axi_bresp;
-   wire [pt.SB_BUS_TAG-1:0]        sb_axi_bid;
-
-   // AXI Read Channels
-   wire                            sb_axi_arvalid;
-   wire                            sb_axi_arready;
-   wire [pt.SB_BUS_TAG-1:0]        sb_axi_arid;
-   wire [31:0]                     sb_axi_araddr;
-   wire [3:0]                      sb_axi_arregion;
-   wire [7:0]                      sb_axi_arlen;
-   wire [2:0]                      sb_axi_arsize;
-   wire [1:0]                      sb_axi_arburst;
-   wire                            sb_axi_arlock;
-   wire [3:0]                      sb_axi_arcache;
-   wire [2:0]                      sb_axi_arprot;
-   wire [3:0]                      sb_axi_arqos;
-
-   wire                            sb_axi_rvalid;
-   wire                            sb_axi_rready;
-   wire [pt.SB_BUS_TAG-1:0]        sb_axi_rid;
-   wire [63:0]                     sb_axi_rdata;
-   wire [1:0]                      sb_axi_rresp;
-   wire                            sb_axi_rlast;
-
-   //-------------------------- DMA AXI signals--------------------------
-   // AXI Write Channels
-   wire                         dma_axi_awvalid;
-   wire                         dma_axi_awready;
-   wire [pt.DMA_BUS_TAG-1:0]    dma_axi_awid;
-   wire [31:0]                  dma_axi_awaddr;
-   wire [2:0]                   dma_axi_awsize;
-   wire [2:0]                   dma_axi_awprot;
-   wire [7:0]                   dma_axi_awlen;
-   wire [1:0]                   dma_axi_awburst;
-
-
-   wire                         dma_axi_wvalid;
-   wire                         dma_axi_wready;
-   wire [63:0]                  dma_axi_wdata;
-   wire [7:0]                   dma_axi_wstrb;
-   wire                         dma_axi_wlast;
-
-   wire                         dma_axi_bvalid;
-   wire                         dma_axi_bready;
-   wire [1:0]                   dma_axi_bresp;
-   wire [pt.DMA_BUS_TAG-1:0]    dma_axi_bid;
-
-   // AXI Read Channels
-   wire                         dma_axi_arvalid;
-   wire                         dma_axi_arready;
-   wire [pt.DMA_BUS_TAG-1:0]    dma_axi_arid;
-   wire [31:0]                  dma_axi_araddr;
-   wire [2:0]                   dma_axi_arsize;
-   wire [2:0]                   dma_axi_arprot;
-   wire [7:0]                   dma_axi_arlen;
-   wire [1:0]                   dma_axi_arburst;
-
-   wire                         dma_axi_rvalid;
-   wire                         dma_axi_rready;
-   wire [pt.DMA_BUS_TAG-1:0]    dma_axi_rid;
-   wire [63:0]                  dma_axi_rdata;
-   wire [1:0]                   dma_axi_rresp;
-   wire                         dma_axi_rlast;
-
-   // AXI
-   assign ifu_axi_awready = 1'b1;
-   assign ifu_axi_wready = 1'b1;
-   assign ifu_axi_bvalid = '0;
-   assign ifu_axi_bresp[1:0] = '0;
-   assign ifu_axi_bid[pt.IFU_BUS_TAG-1:0] = '0;
-
-`endif //  `ifdef RV_BUILD_AHB_LITE
 
 
 
@@ -793,13 +552,14 @@ import el2_pkg::*;
    logic [31:0]            dmi_reg_rdata;
 
    // Instantiate the el2_swerv core
-   el2_swerv #(.pt(pt)) swerv (
+   el2_swerv #(.A(A)) swerv (
                                 .clk(clk),
+                                .programming_rst(reset),
                                 .*
                                 );
 
    // Instantiate the mem
-   el2_mem  #(.pt(pt)) mem (
+   el2_mem  #(.A(A)) mem (
                              .clk(active_l2clk),
                              .rst_l(core_rst_l),
                              .*
@@ -877,7 +637,7 @@ import el2_pkg::*;
          .PSLVERR(PSLVERR)
    );
 
-//0010000000000000 0x2000
+   //0010000000000000 0x2000
 //0100000000000000 0x4000
 //0110000000000000 0x6000
 //1000000000000000 0x8000
@@ -889,11 +649,11 @@ import el2_pkg::*;
 //#define STDOUT     0xd0580000
 
 //#define TIMER_BASE           0x20002000
-//#define GPIO_BASE            0x20004000
-//#define SPI_BASE             0x20006000
-//#define PWM_BASE             0x20008000
-//#define UART_BASE            0x2000A000
-//#define I2C_BASE             0x2000C000
+//#define PWM_BASE             0x20004000
+//#define UART_BASE            0x20006000
+//#define GPIO_BASE            0x20008000
+//#define SPI_BASE             0x2000A000
+//#define I2C_BASE             0x2000E000
 
    logic [31:0] rd_data1,rd_data2,rd_data3,rd_data4,rd_data5,rd_data6;
    logic PSLVERR_1,PSLVERR_2,PSLVERR_3,PSLVERR_4,PSLVERR_5,PSLVERR_6;
@@ -905,7 +665,6 @@ import el2_pkg::*;
    logic [19:0] addr_out1,addr_out2,addr_out3,addr_out4,addr_out5,addr_out6;
    logic [31:0] data_out1,data_out2,data_out3,data_out4,data_out5,data_out6;
    logic psel1,psel2,psel3,psel4,psel5,psel6;
-
 
     // APB interconnect Instatiation 
    apb_interconnect apb_interconnect (
@@ -928,6 +687,7 @@ import el2_pkg::*;
       .rd_data6(rd_data6)    
    );
        
+  
 
    apb_timer #(
    // parameters
@@ -949,7 +709,7 @@ import el2_pkg::*;
 
 
    localparam GPIO_PINS = 32,
-              STAGES    =  1;
+              STAGES    =  2;
 
       // // GPIO signals
     logic [GPIO_PINS-1:0]  gpio_i ,
@@ -978,6 +738,21 @@ import el2_pkg::*;
       .gpio_o (gpio_o), 
       .gpio_oe(gpio_oe)
    );
+   
+   assign pin0 = gpio_o[0];
+   assign pin1 = gpio_o[1];
+   assign pin2 = gpio_o[2];
+   assign pin3 = gpio_o[3];
+   assign pin4 = gpio_o[4];
+   
+   assign gpio_i[0] = in0;
+   assign gpio_i[1] = in1;
+   assign gpio_i[2] = in2;
+   assign gpio_i[3] = in3;
+   assign gpio_i[4] = in4;
+   assign gpio_i[31:5] = 0;
+   
+   
 
 
       // SPI SIGNALS
@@ -1023,10 +798,16 @@ import el2_pkg::*;
 
    // PWM SIGANLS
    localparam PWM_DATA_WIDTH = 32;																																																		
-   logic         o_pwm;
+//   logic         o_pwm;
+   logic         o_pwm_1;
    logic         o_pwm_2;
    logic     	oe_pwm1;
    logic     	oe_pwm2;
+   
+   assign pwm_led = o_pwm_1;
+   assign pwm_en =  oe_pwm1;
+   
+   
 
    apb_pwm #(.DATA_WIDTH(PWM_DATA_WIDTH),
              .ADDR_WIDTH(APB_ADDR_WIDTH))
@@ -1049,11 +830,10 @@ import el2_pkg::*;
     logic psel_i;
     logic pwrite_i;
     logic penable_i;
-    logic rx_i;
     logic pslverr_o;
     logic [31:0] prdata_o;
     logic pready_o;
-    logic tx_o;
+//    logic tx_o;
     logic intr_tx;
     logic intr_rx;
     logic intr_tx_level;
@@ -1086,7 +866,6 @@ import el2_pkg::*;
 		.intr_tx_empty(intr_tx_empty)
     );  
 
-
    //  JTAG/DMI instance
    dmi_wrapper  dmi_wrapper (
     // JTAG signals
@@ -1108,12 +887,12 @@ import el2_pkg::*;
     .dmi_hard_reset   ()
    );
 
-`ifdef RV_ASSERT_ON
-// to avoid internal assertions failure at time 0
-initial begin
-    $assertoff(0, swerv);
-    @ (negedge clk) $asserton(0, swerv);
-end
-`endif
+//`ifdef RV_ASSERT_ON
+//// to avoid internal assertions failure at time 0
+//initial begin
+//    $assertoff(0, swerv);
+//    @ (negedge clk) $asserton(0, swerv);
+//end
+//`endif
 
 endmodule

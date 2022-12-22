@@ -20,8 +20,10 @@
 // Comments:
 //********************************************************************************
 
-module el2_pic_ctrl #(
-`include "el2_param.vh"
+module el2_pic_ctrl
+import el2_pkg::*;
+ #(
+parameter A=0
  )
                   (
 
@@ -76,6 +78,7 @@ logic [INT_ENABLE_GRPS:0]                    intenable_clk_enable_grp ;
 logic [INT_ENABLE_GRPS:0]                    gw_clk ;
 
 logic  addr_intpend_base_match;
+//logic  addr_intpend_base_match;
 
 logic  raddr_config_pic_match ;
 logic  raddr_intenable_base_match;
@@ -525,7 +528,7 @@ logic [14:0] address;
 
 assign address[14:0] = picm_raddr_ff[14:0];
 
-// `include "pic_map_auto.h"
+//`include "pic_map_auto.h"
 
 endmodule
 

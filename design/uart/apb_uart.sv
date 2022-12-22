@@ -1,3 +1,24 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 22.06.2022 11:35:25
+// Design Name: 
+// Module Name: apb_uart
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
 module apb_uart (
     input logic pclk_i,
     input logic prst_ni,
@@ -34,7 +55,7 @@ uart_core utc(
 		.reg_rdata(prdata_o),
 		.reg_addr(paddr_p),   
 		.tx_o(tx_o),
-		.rx_i(tx_o),
+		.rx_i(rx_i),
 		.intr_tx(intr_tx),
 		.intr_rx(intr_rx),
 		.intr_tx_level(intr_tx_level),
@@ -49,10 +70,6 @@ always_comb begin
     if(psel_i == 1'b1 && penable_i == 1'b1 )begin
     paddr_p   = paddr_i    ;
     pwdata_p  = pwdata_i   ;
-    end
-    else begin
-        paddr_p   = 0;
-        pwdata_p  = 0;
     end
 end 
 

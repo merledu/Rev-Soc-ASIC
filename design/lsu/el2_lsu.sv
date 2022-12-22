@@ -28,7 +28,7 @@
 module el2_lsu
 import el2_pkg::*;
 #(
-`include "el2_param.vh"
+parameter A=0
  )
 (
 
@@ -277,7 +277,7 @@ import el2_pkg::*;
    assign       lsu_raw_fwd_lo_m = (|stbuf_fwdbyteen_lo_m[pt.DCCM_BYTE_WIDTH-1:0]);
    assign       lsu_raw_fwd_hi_m = (|stbuf_fwdbyteen_hi_m[pt.DCCM_BYTE_WIDTH-1:0]);
 
-   el2_lsu_lsc_ctl #(.pt(pt)) lsu_lsc_ctl (.*);
+   el2_lsu_lsc_ctl #(.A(A)) lsu_lsc_ctl (.*);
 
    // block stores in decode  - for either bus or stbuf reasons
    assign lsu_store_stall_any = lsu_stbuf_full_any | lsu_bus_buffer_full_any | ld_single_ecc_error_r_ff;
@@ -330,7 +330,7 @@ import el2_pkg::*;
    assign lsu_pmu_load_external_m  = lsu_pkt_m.valid & lsu_pkt_m.load & addr_external_m;
    assign lsu_pmu_store_external_m = lsu_pkt_m.valid & lsu_pkt_m.store & addr_external_m;
 
-   el2_lsu_dccm_ctl #(.pt(pt)) dccm_ctl (
+   el2_lsu_dccm_ctl #(.A(A)) dccm_ctl (
       .lsu_addr_d(lsu_addr_d[31:0]),
       .end_addr_d(end_addr_d[pt.DCCM_BITS-1:0]),
       .lsu_addr_m(lsu_addr_m[pt.DCCM_BITS-1:0]),
@@ -341,7 +341,7 @@ import el2_pkg::*;
       .*
    );
 
-   el2_lsu_stbuf #(.pt(pt)) stbuf (
+   el2_lsu_stbuf #(.A(A)) stbuf (
       .lsu_addr_d(lsu_addr_d[pt.LSU_SB_BITS-1:0]),
       .end_addr_d(end_addr_d[pt.LSU_SB_BITS-1:0]),
 
@@ -349,7 +349,7 @@ import el2_pkg::*;
 
    );
 
-   el2_lsu_ecc #(.pt(pt)) ecc (
+   el2_lsu_ecc #(.A(A)) ecc (
       .lsu_addr_r(lsu_addr_r[pt.DCCM_BITS-1:0]),
       .end_addr_r(end_addr_r[pt.DCCM_BITS-1:0]),
       .lsu_addr_m(lsu_addr_m[pt.DCCM_BITS-1:0]),
@@ -357,16 +357,16 @@ import el2_pkg::*;
       .*
    );
 
-   el2_lsu_trigger #(.pt(pt)) trigger (
+   el2_lsu_trigger #(.A(A)) trigger (
       .store_data_m(store_data_m[31:0]),
       .*
    );
 
    // Clk domain
-   el2_lsu_clkdomain #(.pt(pt)) clkdomain (.*);
+   el2_lsu_clkdomain #(.A(A)) clkdomain (.*);
 
    // Bus interface
-   el2_lsu_bus_intf #(.pt(pt)) bus_intf (
+   el2_lsu_bus_intf #(.A(A)) bus_intf (
       .lsu_addr_m(lsu_addr_m[31:0] & {32{addr_external_m & lsu_pkt_m.valid}}),
       .lsu_addr_r(lsu_addr_r[31:0] & {32{lsu_busreq_r}}),
 

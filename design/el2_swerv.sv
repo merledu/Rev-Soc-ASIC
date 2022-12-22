@@ -23,11 +23,12 @@
 module el2_swerv
 import el2_pkg::*;
 #(
-`include "el2_param.vh"
+parameter A=0
  )
   (
    input logic                  clk,
    input logic                  rst_l,
+   input logic programming_rst,
    input logic                  dbg_rst_l,
    input logic [31:1]           rst_vec,
    input logic                  nmi_int,
@@ -832,7 +833,7 @@ import el2_pkg::*;
    assign core_dbg_cmd_fail = dma_dbg_cmd_fail | dec_dbg_cmd_fail;
    assign core_dbg_rddata[31:0] = dma_dbg_cmd_done ? dma_dbg_rddata[31:0] : dec_dbg_rddata[31:0];
 
-   el2_dbg #(.pt(pt)) dbg (
+   el2_dbg #(.A(A)) dbg (
       .rst_l(core_rst_l),
       .clk(free_l2clk),
       .clk_override(dec_tlu_misc_clk_override),
@@ -853,12 +854,11 @@ import el2_pkg::*;
 `ifdef RV_ASSERT_ON
       assert_fetch_indbghalt: assert #0 (~(ifu.ifc_fetch_req_f & dec.tlu.dbg_tlu_halted_f & ~dec.tlu.dcsr_single_step_running)) else $display("ERROR: Fetching in dBG halt!");
 `endif
-
    // -----------------   DEBUG END -----------------------------
 
-   assign core_rst_l = rst_l & (dbg_core_rst_l | scan_mode);
+   assign core_rst_l = rst_l & (dbg_core_rst_l | scan_mode) & programming_rst;
    // fetch
-   el2_ifu #(.pt(pt)) ifu (
+   el2_ifu #(.A(A)) ifu (
                             .clk(active_l2clk),
                             .rst_l(core_rst_l),
                             .dec_tlu_flush_err_wb       (dec_tlu_flush_err_r      ),
@@ -878,20 +878,20 @@ import el2_pkg::*;
                             );
 
 
-   el2_dec #(.pt(pt)) dec (
+   el2_dec #(.A(A)) dec (
                             .clk(active_l2clk),
                             .dbg_cmd_wrdata(dbg_cmd_wrdata[1:0]),
                             .rst_l(core_rst_l),
                             .*
                             );
 
-   el2_exu #(.pt(pt)) exu (
+   el2_exu #(.A(A)) exu (
                             .clk(active_l2clk),
                             .rst_l(core_rst_l),
                             .*
                             );
 
-   el2_lsu #(.pt(pt)) lsu (
+   el2_lsu #(.A(A)) lsu (
                             .clk(active_l2clk),
                             .rst_l(core_rst_l),
                             .clk_override(dec_tlu_lsu_clk_override),
@@ -916,7 +916,7 @@ import el2_pkg::*;
                             );
 
 
-   el2_pic_ctrl  #(.pt(pt)) pic_ctrl_inst (
+   el2_pic_ctrl  #(.A(A)) pic_ctrl_inst (
                                             .clk(free_l2clk),
                                             .clk_override(dec_tlu_pic_clk_override),
                                             .io_clk_override(dec_tlu_picio_clk_override),
@@ -929,7 +929,7 @@ import el2_pkg::*;
                                             .rst_l(core_rst_l),
                                             .*);
 
-   el2_dma_ctrl #(.pt(pt)) dma_ctrl (
+   el2_dma_ctrl #(.A(A)) dma_ctrl (
                                       .clk(free_l2clk),
                                       .rst_l(core_rst_l),
                                       .clk_override(dec_tlu_misc_clk_override),
@@ -956,7 +956,7 @@ import el2_pkg::*;
    if (pt.BUILD_AHB_LITE == 1) begin: Gen_AXI_To_AHB
 
       // AXI4 -> AHB Gasket for LSU
-      axi4_to_ahb #(.pt(pt),
+      axi4_to_ahb #(.A(A),
                     .TAG(pt.LSU_BUS_TAG)) lsu_axi4_to_ahb (
 
          .clk(free_l2clk),
@@ -1017,7 +1017,7 @@ import el2_pkg::*;
          .*
       );
 
-      axi4_to_ahb #(.pt(pt),
+      axi4_to_ahb #(.A(A),
                     .TAG(pt.IFU_BUS_TAG)) ifu_axi4_to_ahb (
          .clk(free_l2clk),
          .free_clk(free_clk),
@@ -1077,7 +1077,7 @@ import el2_pkg::*;
       );
 
       // AXI4 -> AHB Gasket for System Bus
-      axi4_to_ahb #(.pt(pt),
+      axi4_to_ahb #(.A(A),
                     .TAG(pt.SB_BUS_TAG)) sb_axi4_to_ahb (
          .clk(free_l2clk),
          .free_clk(free_clk),
@@ -1137,7 +1137,7 @@ import el2_pkg::*;
       );
 
       //AHB -> AXI4 Gasket for DMA
-      ahb_to_axi4 #(.pt(pt),
+      ahb_to_axi4 #(.A(A),
                     .TAG(pt.DMA_BUS_TAG)) dma_ahb_to_axi4 (
          .clk(free_l2clk),
          .rst_l(core_rst_l),

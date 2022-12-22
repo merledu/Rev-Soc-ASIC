@@ -42,7 +42,7 @@
 module el2_lsu_dccm_mem
 import el2_pkg::*;
 #(
-`include "el2_param.vh"
+parameter A=0
  )(
    input logic         clk,                                             // Clock only while core active.  Through one clock header.  For flops with    second clock header built in.  Connected to ACTIVE_L2CLK.
    input logic         active_clk,                                      // Clock only while core active.  Through two clock headers. For flops without second clock header built in.
@@ -248,19 +248,36 @@ import el2_pkg::*;
                                 );
       end
       else if (DCCM_INDEX_DEPTH == 256) begin : dccm
-         ram_256x39  dccm_bank (
-                                // Primary ports
-                                .ME(dccm_clken[i]),
-                                .CLK(clk),
-                                .WE(wren_bank[i]),
-                                .ADR(addr_bank[i]),
-                                .D(wr_data_bank[i][pt.DCCM_FDATA_WIDTH-1:0]),
-                                .Q(dccm_bank_dout[i][pt.DCCM_FDATA_WIDTH-1:0]),
-                                .ROP ( ),
-                                // These are used by SoC
-                                `EL2_LOCAL_DCCM_RAM_TEST_PORTS
-                                .*
-                                );
+//         ram_256x39  dccm_bank (
+//                                // Primary ports
+//                                .ME(dccm_clken[i]),
+//                                .CLK(clk),
+//                                .WE(wren_bank[i]),
+//                                .ADR(addr_bank[i]),
+//                                .D(wr_data_bank[i][pt.DCCM_FDATA_WIDTH-1:0]),
+//                                .Q(dccm_bank_dout[i][pt.DCCM_FDATA_WIDTH-1:0]),
+//                                .ROP ( ),
+//                                // These are used by SoC
+//                                `EL2_LOCAL_DCCM_RAM_TEST_PORTS
+//                                .*
+//                                );
+    sky130_sram_1kbyte_1rw1r_32x256_8 dccm_bank(
+//                                    `ifdef USE_POWER_PINS
+//                                    .vccd1(vccd1),
+//                                    .vssd1(vssd1),
+//                                    `endif
+                                .clk0(clk),
+                                .csb0(~dccm_clken[i]),
+                                .web0(~wren_bank[i]),
+                                .wmask0(4'hf),
+                                .addr0(addr_bank[i]),
+                                .din0(wr_data_bank[i]),
+                                .dout0(dccm_bank_dout[i]),
+                                    .clk1(clk),
+                                    .csb1(1'b1),
+                                    .addr1(10'h000),
+                                    .dout1()
+                   );
       end
       else if (DCCM_INDEX_DEPTH == 128) begin : dccm
          ram_128x39  dccm_bank (

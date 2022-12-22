@@ -30,7 +30,7 @@
 module el2_dec
 import el2_pkg::*;
 #(
-`include "el2_param.vh"
+parameter A=0
  )
   (
    input logic clk,                          // Clock only while core active.  Through one clock header.  For flops with    second clock header built in.  Connected to ACTIVE_L2CLK.
@@ -397,16 +397,16 @@ import el2_pkg::*;
    assign dec_dbg_rddata[31:0] = dec_i0_wdata_r[31:0];
 
 
-   el2_dec_ib_ctl #(.pt(pt)) instbuff (.*);
+   el2_dec_ib_ctl #(.A(A)) instbuff (.*);
 
 
-   el2_dec_decode_ctl #(.pt(pt)) decode (.*);
+   el2_dec_decode_ctl #(.A(A)) decode (.*);
 
 
-   el2_dec_tlu_ctl #(.pt(pt)) tlu (.*);
+   el2_dec_tlu_ctl #(.A(A)) tlu (.*);
 
 
-   el2_dec_gpr_ctl #(.pt(pt)) arf (.*,
+   el2_dec_gpr_ctl #(.A(A)) arf (.*,
                     // inputs
                     .raddr0(dec_i0_rs1_d[4:0]),
                     .raddr1(dec_i0_rs2_d[4:0]),
@@ -422,7 +422,7 @@ import el2_pkg::*;
 
 // Trigger
 
-   el2_dec_trigger #(.pt(pt)) dec_trigger (.*);
+   el2_dec_trigger #(.A(A)) dec_trigger (.*);
 
 
 

@@ -17,7 +17,7 @@
 module el2_exu
 import el2_pkg::*;
 #(
-`include "el2_param.vh"
+parameter A=0
 )
   (
    input logic          clk,                                           // Top level clock
@@ -230,7 +230,7 @@ import el2_pkg::*;
 
 
 
-   el2_exu_alu_ctl #(.pt(pt)) i_alu  (.*,
+   el2_exu_alu_ctl #(.A(A)) i_alu  (.*,
                           .enable            ( x_data_en                   ),   // I
                           .pp_in             ( i0_predict_newp_d           ),   // I
                           .valid_in          ( dec_i0_alu_decode_d         ),   // I
@@ -253,7 +253,7 @@ import el2_pkg::*;
 
 
 
-   el2_exu_mul_ctl #(.pt(pt)) i_mul   (.*,
+   el2_exu_mul_ctl #(.A(A)) i_mul   (.*,
                           .mul_p             ( mul_p              & {$bits(el2_mul_pkt_t){mul_p.valid}} ),   // I
                           .rs1_in            ( muldiv_rs1_d[31:0] & {32{mul_p.valid}}                    ),   // I
                           .rs2_in            ( i0_rs2_d[31:0]     & {32{mul_p.valid}}                    ),   // I
@@ -261,7 +261,7 @@ import el2_pkg::*;
 
 
 
-   el2_exu_div_ctl #(.pt(pt)) i_div   (.*,
+   el2_exu_div_ctl #(.A(A)) i_div   (.*,
                           .cancel            ( dec_div_cancel              ),   // I
                           .dp                ( div_p                       ),   // I
                           .dividend          ( muldiv_rs1_d[31:0]          ),   // I

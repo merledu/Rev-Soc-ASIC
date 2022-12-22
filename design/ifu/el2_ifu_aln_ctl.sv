@@ -21,7 +21,7 @@
 module el2_ifu_aln_ctl
 import el2_pkg::*;
 #(
-`include "el2_param.vh"
+parameter A=0
  )
   (
 
@@ -577,9 +577,9 @@ if(pt.BTB_ENABLE==1) begin
 
    // if you detect br does not start on instruction boundary
 
-   el2_btb_addr_hash #(.pt(pt)) firsthash (.pc(firstpc [pt.BTB_INDEX3_HI:pt.BTB_INDEX1_LO]),
+   el2_btb_addr_hash #(.A(A)) firsthash (.pc(firstpc [pt.BTB_INDEX3_HI:pt.BTB_INDEX1_LO]),
                                             .hash(firstpc_hash [pt.BTB_ADDR_HI:pt.BTB_ADDR_LO]));
-   el2_btb_addr_hash #(.pt(pt)) secondhash(.pc(secondpc[pt.BTB_INDEX3_HI:pt.BTB_INDEX1_LO]),
+   el2_btb_addr_hash #(.A(A)) secondhash(.pc(secondpc[pt.BTB_INDEX3_HI:pt.BTB_INDEX1_LO]),
                                             .hash(secondpc_hash[pt.BTB_ADDR_HI:pt.BTB_ADDR_LO]));
 
    if(pt.BTB_FULLYA) begin
@@ -588,15 +588,15 @@ if(pt.BTB_ENABLE==1) begin
    end
    else begin
       if(pt.BTB_BTAG_FOLD) begin : btbfold
-         el2_btb_tag_hash_fold #(.pt(pt)) first_brhash (.pc(firstpc [pt.BTB_ADDR_HI+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE:pt.BTB_ADDR_HI+1]),
+         el2_btb_tag_hash_fold #(.A(A)) first_brhash (.pc(firstpc [pt.BTB_ADDR_HI+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE:pt.BTB_ADDR_HI+1]),
                                                          .hash(firstbrtag_hash [pt.BTB_BTAG_SIZE-1:0]));
-         el2_btb_tag_hash_fold #(.pt(pt)) second_brhash(.pc(secondpc[pt.BTB_ADDR_HI+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE:pt.BTB_ADDR_HI+1]),
+         el2_btb_tag_hash_fold #(.A(A)) second_brhash(.pc(secondpc[pt.BTB_ADDR_HI+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE:pt.BTB_ADDR_HI+1]),
                                                          .hash(secondbrtag_hash[pt.BTB_BTAG_SIZE-1:0]));
       end
       else begin
-         el2_btb_tag_hash #(.pt(pt)) first_brhash (.pc(firstpc [pt.BTB_ADDR_HI+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE:pt.BTB_ADDR_HI+1]),
+         el2_btb_tag_hash #(.A(A)) first_brhash (.pc(firstpc [pt.BTB_ADDR_HI+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE:pt.BTB_ADDR_HI+1]),
                                                     .hash(firstbrtag_hash [pt.BTB_BTAG_SIZE-1:0]));
-         el2_btb_tag_hash #(.pt(pt)) second_brhash(.pc(secondpc[pt.BTB_ADDR_HI+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE:pt.BTB_ADDR_HI+1]),
+         el2_btb_tag_hash #(.A(A)) second_brhash(.pc(secondpc[pt.BTB_ADDR_HI+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE:pt.BTB_ADDR_HI+1]),
                                                     .hash(secondbrtag_hash[pt.BTB_BTAG_SIZE-1:0]));
       end
    end // else: !if(pt.BTB_FULLYA)

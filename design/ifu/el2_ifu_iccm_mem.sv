@@ -22,7 +22,7 @@
 module el2_ifu_iccm_mem
 import el2_pkg::*;
 #(
-`include "el2_param.vh"
+parameter A=0
  )(
    input logic                                        clk,                                 // Clock only while core active.  Through one clock header.  For flops with    second clock header built in.  Connected to ACTIVE_L2CLK.
    input logic                                        active_clk,                          // Clock only while core active.  Through two clock headers. For flops without second clock header built in.
@@ -31,7 +31,8 @@ import el2_pkg::*;
 
    input logic                                        iccm_wren,                           // ICCM write enable
    input logic                                        iccm_rden,                           // ICCM read enable
-   input logic [pt.ICCM_BITS-1:1]                     iccm_rw_addr,                        // ICCM read/write address
+   input logic [pt.ICCM_BITS-1:1]                     iccm_rw_addr,                        // ICCM read/write    always_ff @(posedge clk or negedge rst_l) begin
+
    input logic                                        iccm_buf_correct_ecc,                // ICCM is doing a single bit error correct cycle
    input logic                                        iccm_correction_state,               // ICCM under a correction - This is needed to guard replacements when hit
    input logic [2:0]                                  iccm_wr_size,                        // ICCM write size
@@ -182,27 +183,46 @@ import el2_pkg::*;
      end // block: iccm
 
      else if (pt.ICCM_INDEX_BITS == 8 ) begin : iccm
-               ram_256x39 iccm_bank (
-                                     // Primary ports
-                                     .CLK(clk),
-                                     .ME(iccm_clken[i]),
-                                     .WE(wren_bank[i]),
-                                     .ADR(addr_bank[i]),
-                                     .D(iccm_bank_wr_data[i][38:0]),
-                                     .Q(iccm_bank_dout[i][38:0]),
-                                     .ROP ( ),
-                                     // These are used by SoC
-                                     .TEST1(iccm_ext_in_pkt[i].TEST1),
-                                     .RME(iccm_ext_in_pkt[i].RME),
-                                     .RM(iccm_ext_in_pkt[i].RM),
-                                     .LS(iccm_ext_in_pkt[i].LS),
-                                     .DS(iccm_ext_in_pkt[i].DS),
-                                     .SD(iccm_ext_in_pkt[i].SD) ,
-                                     .TEST_RNM(iccm_ext_in_pkt[i].TEST_RNM),
-                                     .BC1(iccm_ext_in_pkt[i].BC1),
-                                     .BC2(iccm_ext_in_pkt[i].BC2)
+//               ram_256x39 iccm_bank (
+//                                     // Primary ports
+//                                     .CLK(clk),
+//                                     .ME(iccm_clken[i]),
+//                                     .WE(wren_bank[i]),
+//                                     .ADR(addr_bank[i]),
+//                                     .D(iccm_bank_wr_data[i][38:0]),
+//                                     .Q(iccm_bank_dout[i][38:0]),
+//                                     .ROP ( ),
+//                                     // These are used by SoC
+//                                     .TEST1(iccm_ext_in_pkt[i].TEST1),
+//                                     .RME(iccm_ext_in_pkt[i].RME),
+//                                     .RM(iccm_ext_in_pkt[i].RM),
+//                                     .LS(iccm_ext_in_pkt[i].LS),
+//                                     .DS(iccm_ext_in_pkt[i].DS),
+//                                     .SD(iccm_ext_in_pkt[i].SD) ,
+//                                     .TEST_RNM(iccm_ext_in_pkt[i].TEST_RNM),
+//                                     .BC1(iccm_ext_in_pkt[i].BC1),
+//                                     .BC2(iccm_ext_in_pkt[i].BC2)
 
-                                      );
+//                                      );
+                                      
+                                      
+                                 sky130_sram_1kbyte_1rw1r_32x256_8 iccm(
+                                   // `ifdef USE_POWER_PINS
+                                   // .vccd1(vccd1),
+                                   // .vssd1(vssd1),
+                                   // `endif
+                                   .clk0(clk),
+                                   .csb0(~iccm_clken[i]),
+                                   .web0(~wren_bank[i]),
+                                   .wmask0(4'hf),
+                                   .addr0(addr_bank[i]),
+                                   .din0(iccm_bank_wr_data[i][31:0]),
+                                   .dout0(iccm_bank_dout[i][31:0]),
+                                       .clk1(clk),
+                                       .csb1(1'b1),
+                                       .addr1(10'h000),
+                                       .dout1()
+                     );
      end // block: iccm
      else if (pt.ICCM_INDEX_BITS == 9 ) begin : iccm
                ram_512x39 iccm_bank (

@@ -30,7 +30,7 @@
 module el2_lsu_stbuf
 import el2_pkg::*;
 #(
-`include "el2_param.vh"
+parameter A=0
  )
 (
    input logic                           clk,                         // core clock

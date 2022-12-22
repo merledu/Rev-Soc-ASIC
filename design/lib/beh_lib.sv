@@ -16,7 +16,9 @@
 // all flops call the rvdff flop
 
 
-module rvdff #( parameter WIDTH=1, SHORT=0 )
+module rvdff 
+import el2_pkg::*;
+#( parameter WIDTH=1, SHORT=0 )
    (
      input logic [WIDTH-1:0] din,
      input logic           clk,
@@ -46,7 +48,9 @@ end
 endmodule
 
 // rvdff with 2:1 input mux to flop din iff sel==1
-module rvdffs #( parameter WIDTH=1, SHORT=0 )
+module rvdffs 
+import el2_pkg::*;
+#( parameter WIDTH=1, SHORT=0 )
    (
      input logic [WIDTH-1:0] din,
      input logic             en,
@@ -65,7 +69,9 @@ end
 endmodule
 
 // rvdff with en and clear
-module rvdffsc #( parameter WIDTH=1, SHORT=0 )
+module rvdffsc 
+import el2_pkg::*;
+#( parameter WIDTH=1, SHORT=0 )
    (
      input logic [WIDTH-1:0] din,
      input logic             en,
@@ -86,7 +92,9 @@ end
 endmodule
 
 // _fpga versions
-module rvdff_fpga #( parameter WIDTH=1, SHORT=0 )
+module rvdff_fpga 
+import el2_pkg::*;
+#( parameter WIDTH=1, SHORT=0 )
    (
      input logic [WIDTH-1:0] din,
      input logic           clk,
@@ -110,7 +118,9 @@ end
 endmodule
 
 // rvdff with 2:1 input mux to flop din iff sel==1
-module rvdffs_fpga #( parameter WIDTH=1, SHORT=0 )
+module rvdffs_fpga 
+import el2_pkg::*;
+#( parameter WIDTH=1, SHORT=0 )
    (
      input logic [WIDTH-1:0] din,
      input logic             en,
@@ -136,7 +146,9 @@ end
 endmodule
 
 // rvdff with en and clear
-module rvdffsc_fpga #( parameter WIDTH=1, SHORT=0 )
+module rvdffsc_fpga 
+import el2_pkg::*;
+#( parameter WIDTH=1, SHORT=0 )
    (
      input logic [WIDTH-1:0] din,
      input logic             en,
@@ -163,7 +175,9 @@ end
 endmodule
 
 
-module rvdffe #( parameter WIDTH=1, SHORT=0, OVERRIDE=0 )
+module rvdffe
+import el2_pkg::*;
+ #( parameter WIDTH=1, SHORT=0, OVERRIDE=0 )
    (
      input  logic [WIDTH-1:0] din,
      input  logic           en,
@@ -195,15 +209,17 @@ else begin : genblock
 
 `ifndef RV_PHYSICAL
    end
-   else
-      $error("%m: rvdffe must be WIDTH >= 8");
+//   else
+//      $error("%m: rvdffe must be WIDTH >= 8");
 `endif
 end // else: !if(SHORT == 1)
 
 endmodule // rvdffe
 
 
-module rvdffpcie #( parameter WIDTH=31 )
+module rvdffpcie 
+import el2_pkg::*;
+#( parameter WIDTH=31 )
    (
      input  logic [WIDTH-1:0] din,
      input  logic             clk,
@@ -229,14 +245,15 @@ module rvdffpcie #( parameter WIDTH=31 )
 
 `ifndef RV_PHYSICAL
    end
-   else
-      $error("%m: rvdffpcie width must be 31");
 `endif
+//end
 endmodule
 
 // format: { LEFT, EXTRA }
 // LEFT # of bits will be done with rvdffie, all else EXTRA with rvdffe
-module rvdfflie #( parameter WIDTH=16, LEFT=8 )
+module rvdfflie 
+import el2_pkg::*;
+#( parameter WIDTH=16, LEFT=8 )
    (
      input  logic [WIDTH-1:0] din,
      input  logic             clk,
@@ -280,8 +297,8 @@ module rvdfflie #( parameter WIDTH=16, LEFT=8 )
 
 `ifndef RV_PHYSICAL
    end
-   else
-      $error("%m: rvdfflie musb be WIDTH >= 16 && LEFT >= 8 && EXTRA >= 8");
+//   else
+//      $error("%m: rvdfflie musb be WIDTH >= 16 && LEFT >= 8 && EXTRA >= 8");
 `endif
 endmodule
 
@@ -291,7 +308,9 @@ endmodule
 // special power flop for predict packet
 // format: { LEFT, RIGHT==31 }
 // LEFT # of bits will be done with rvdffe; RIGHT is enabled by LEFT[LSB] & en
-module rvdffppe #( parameter WIDTH=32 )
+module rvdffppe 
+import el2_pkg::*;
+#( parameter WIDTH=32 )
    (
      input  logic [WIDTH-1:0] din,
      input  logic             clk,
@@ -326,8 +345,8 @@ module rvdffppe #( parameter WIDTH=32 )
 
 `ifndef RV_PHYSICAL
    end
-   else
-      $error("%m: must be WIDTH>=32 && LEFT>=8 && RIGHT>=8");
+//   else
+//      $error("%m: must be WIDTH>=32 && LEFT>=8 && RIGHT>=8");
 `endif
 endmodule
 
@@ -369,47 +388,47 @@ module rvdffie #( parameter WIDTH=1, OVERRIDE=0 )
 
 `ifndef RV_PHYSICAL
    end
-   else
-     $error("%m: rvdffie must be WIDTH >= 8");
+//   else
+//     $error("%m: rvdffie must be WIDTH >= 8");
 `endif
 
 
 endmodule
 
 // ie flop but it has an .en input
-module rvdffiee #( parameter WIDTH=1, OVERRIDE=0 )
-   (
-     input  logic [WIDTH-1:0] din,
+//module rvdffiee #( parameter WIDTH=1, OVERRIDE=0 )
+//   (
+//     input  logic [WIDTH-1:0] din,
 
-     input  logic           clk,
-     input  logic           rst_l,
-     input  logic           scan_mode,
-     input  logic           en,
-     output logic [WIDTH-1:0] dout
-     );
+//     input  logic           clk,
+//     input  logic           rst_l,
+//     input  logic           scan_mode,
+//     input  logic           en,
+//     output logic [WIDTH-1:0] dout
+//     );
 
-   logic                      l1clk;
-   logic                      final_en;
+//   logic                      l1clk;
+//   logic                      final_en;
 
-`ifndef RV_PHYSICAL
-   if (WIDTH >= 8 || OVERRIDE==1) begin: genblock
-`endif
+//`ifndef RV_PHYSICAL
+//   if (WIDTH >= 8 || OVERRIDE==1) begin: genblock
+//`endif
 
-      assign final_en = (|(din ^ dout)) & en;
+//      assign final_en = (|(din ^ dout)) & en;
 
-`ifdef RV_FPGA_OPTIMIZE
-      rvdffs #(WIDTH) dff ( .*, .en(final_en) );
-`else
-      rvdffe #(WIDTH) dff (.*,  .en(final_en));
-`endif
+//`ifdef RV_FPGA_OPTIMIZE
+//      rvdffs #(WIDTH) dff ( .*, .en(final_en) );
+//`else
+//      rvdffe #(WIDTH) dff (.*,  .en(final_en));
+//`endif
 
-`ifndef RV_PHYSICAL
-   end
-   else
-      $error("%m: rvdffie width must be >= 8");
-`endif
+//`ifndef RV_PHYSICAL
+//   end
+//   else
+//      $error("%m: rvdffie width must be >= 8");
+//`endif
 
-endmodule
+//endmodule
 
 
 
@@ -527,42 +546,42 @@ module rvtwoscomp #( parameter WIDTH=32 )
 endmodule  // 2'scomp
 
 // find first
-module rvfindfirst1 #( parameter WIDTH=32, SHIFT=$clog2(WIDTH) )
-   (
-     input logic [WIDTH-1:0] din,
+//module rvfindfirst1 #( parameter WIDTH=32, SHIFT=$clog2(WIDTH) )
+//   (
+//     input logic [WIDTH-1:0] din,
 
-     output logic [SHIFT-1:0] dout
-     );
-   logic                      done;
+//     output logic [SHIFT-1:0] dout
+//     );
+//   logic                      done;
 
-   always_comb begin
-      dout[SHIFT-1:0] = {SHIFT{1'b0}};
-      done    = 1'b0;
+//   always_comb begin
+//      dout[SHIFT-1:0] = {SHIFT{1'b0}};
+//      done    = 1'b0;
 
-      for ( int i = WIDTH-1; i > 0; i-- )  begin : find_first_one
-         done |= din[i];
-         dout[SHIFT-1:0] += done ? 1'b0 : 1'b1;
-      end : find_first_one
-   end
-endmodule // rvfindfirst1
+//      for ( int i = WIDTH-1; i > 0; i-- )  begin : find_first_one
+//         done |= din[i];
+//         dout[SHIFT-1:0] += done ? 1'b0 : 1'b1;
+//      end : find_first_one
+//   end
+//endmodule // rvfindfirst1
 
-module rvfindfirst1hot #( parameter WIDTH=32 )
-   (
-     input logic [WIDTH-1:0] din,
+//module rvfindfirst1hot #( parameter WIDTH=32 )
+//   (
+//     input logic [WIDTH-1:0] din,
 
-     output logic [WIDTH-1:0] dout
-     );
-   logic                      done;
+//     output logic [WIDTH-1:0] dout
+//     );
+//   logic                      done;
 
-   always_comb begin
-      dout[WIDTH-1:0] = {WIDTH{1'b0}};
-      done    = 1'b0;
-      for ( int i = 0; i < WIDTH; i++ )  begin : find_first_one
-         dout[i] = ~done & din[i];
-         done   |= din[i];
-      end : find_first_one
-   end
-endmodule // rvfindfirst1hot
+//   always_comb begin
+//      dout[WIDTH-1:0] = {WIDTH{1'b0}};
+//      done    = 1'b0;
+//      for ( int i = 0; i < WIDTH; i++ )  begin : find_first_one
+//         dout[i] = ~done & din[i];
+//         done   |= din[i];
+//      end : find_first_one
+//   end
+//endmodule // rvfindfirst1hot
 
 // mask and match function matches bits after finding the first 0 position
 // find first starting from LSB. Skip that location and match the rest of the bits
@@ -749,48 +768,48 @@ module rvecc_decode_64  (
  endmodule // rvecc_decode_64
 
 
-module `TEC_RV_ICG
-  (
-   input logic SE, EN, CK,
-   output Q
-   );
+//module `TEC_RV_ICG
+//  (
+//   input logic SE, EN, CK,
+//   output Q
+//   );
 
-   logic  en_ff;
-   logic  enable;
+//   logic  en_ff;
+//   logic  enable;
 
-   assign      enable = EN | SE;
+//   assign      enable = EN | SE;
 
-`ifdef VERILATOR
-   always @(negedge CK) begin
-      en_ff <= enable;
-   end
-`else
-   always @(CK, enable) begin
-      if(!CK)
-        en_ff = enable;
-   end
-`endif
-   assign Q = CK & en_ff;
+//`ifdef VERILATOR
+//   always @(negedge CK) begin
+//      en_ff <= enable;
+//   end
+//`else
+//   always @(CK, enable) begin
+//      if(!CK)
+//        en_ff = enable;
+//   end
+//`endif
+//   assign Q = CK & en_ff;
 
-endmodule
+//endmodule
 
-`ifndef RV_FPGA_OPTIMIZE
-module rvclkhdr
-  (
-   input  logic en,
-   input  logic clk,
-   input  logic scan_mode,
-   output logic l1clk
-   );
+//`ifndef RV_FPGA_OPTIMIZE
+//module rvclkhdr
+//  (
+//   input  logic en,
+//   input  logic clk,
+//   input  logic scan_mode,
+//   output logic l1clk
+//   );
 
-   logic   SE;
-   assign       SE = 0;
+//   logic   SE;
+//   assign       SE = 0;
 
-   `TEC_RV_ICG clkhdr ( .*, .EN(en), .CK(clk), .Q(l1clk));
+//   `TEC_RV_ICG clkhdr ( .*, .EN(en), .CK(clk), .Q(l1clk));
 
-endmodule // rvclkhdr
-`endif
-
+//endmodule // rvclkhdr
+//`endif
+`include"common_defines.vh"
 module rvoclkhdr
   (
    input  logic en,

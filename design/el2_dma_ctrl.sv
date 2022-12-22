@@ -21,8 +21,10 @@
 //
 //********************************************************************************
 
-module el2_dma_ctrl #(
-`include "el2_param.vh"
+module el2_dma_ctrl
+import el2_pkg::*;
+ #(
+parameter A=0
  )(
    input logic         clk,
    input logic         free_clk,

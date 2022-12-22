@@ -27,7 +27,7 @@
 module el2_ifu_bp_ctl
 import el2_pkg::*;
 #(
-`include "el2_param.vh"
+parameter A=0
  )
   (
 
@@ -222,11 +222,11 @@ import el2_pkg::*;
    // ----------------------------------------------------------------------
 
    // hash the incoming fetch PC, first guess at hashing algorithm
-   el2_btb_addr_hash #(.pt(pt)) f1hash(.pc(ifc_fetch_addr_f[pt.BTB_INDEX3_HI:pt.BTB_INDEX1_LO]), .hash(btb_rd_addr_f[pt.BTB_ADDR_HI:pt.BTB_ADDR_LO]));
+   el2_btb_addr_hash #(.A(A)) f1hash(.pc(ifc_fetch_addr_f[pt.BTB_INDEX3_HI:pt.BTB_INDEX1_LO]), .hash(btb_rd_addr_f[pt.BTB_ADDR_HI:pt.BTB_ADDR_LO]));
 
 
    assign fetch_addr_p1_f[31:2] = ifc_fetch_addr_f[31:2] + 30'b1;
-   el2_btb_addr_hash #(.pt(pt)) f1hash_p1(.pc(fetch_addr_p1_f[pt.BTB_INDEX3_HI:pt.BTB_INDEX1_LO]), .hash(btb_rd_addr_p1_f[pt.BTB_ADDR_HI:pt.BTB_ADDR_LO]));
+   el2_btb_addr_hash #(.A(A)) f1hash_p1(.pc(fetch_addr_p1_f[pt.BTB_INDEX3_HI:pt.BTB_INDEX1_LO]), .hash(btb_rd_addr_p1_f[pt.BTB_ADDR_HI:pt.BTB_ADDR_LO]));
 
    assign btb_sel_f[1] = ~bht_dir_f[0];
    assign btb_sel_f[0] =  bht_dir_f[0];
@@ -586,15 +586,15 @@ assign use_fa_plus = (~bht_dir_f[0] & ~fetch_start_f[0] & ~btb_rd_pc4_f);
    if(!pt.BTB_FULLYA) begin
 
       if(pt.BTB_BTAG_FOLD) begin : btbfold
-         el2_btb_tag_hash_fold #(.pt(pt)) rdtagf  (.hash(fetch_rd_tag_f[pt.BTB_BTAG_SIZE-1:0]),
+         el2_btb_tag_hash_fold #(.A(A)) rdtagf  (.hash(fetch_rd_tag_f[pt.BTB_BTAG_SIZE-1:0]),
                                                     .pc({ifc_fetch_addr_f[pt.BTB_ADDR_HI+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE:pt.BTB_ADDR_HI+1]}));
-         el2_btb_tag_hash_fold #(.pt(pt)) rdtagp1f(.hash(fetch_rd_tag_p1_f[pt.BTB_BTAG_SIZE-1:0]),
+         el2_btb_tag_hash_fold #(.A(A)) rdtagp1f(.hash(fetch_rd_tag_p1_f[pt.BTB_BTAG_SIZE-1:0]),
                                                     .pc({fetch_addr_p1_f[ pt.BTB_ADDR_HI+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE:pt.BTB_ADDR_HI+1]}));
       end
       else begin
-         el2_btb_tag_hash #(.pt(pt)) rdtagf(.hash(fetch_rd_tag_f[pt.BTB_BTAG_SIZE-1:0]),
+         el2_btb_tag_hash #(.A(A)) rdtagf(.hash(fetch_rd_tag_f[pt.BTB_BTAG_SIZE-1:0]),
                                              .pc({ifc_fetch_addr_f[pt.BTB_ADDR_HI+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE:pt.BTB_ADDR_HI+1]}));
-         el2_btb_tag_hash #(.pt(pt)) rdtagp1f(.hash(fetch_rd_tag_p1_f[pt.BTB_BTAG_SIZE-1:0]),
+         el2_btb_tag_hash #(.A(A)) rdtagp1f(.hash(fetch_rd_tag_p1_f[pt.BTB_BTAG_SIZE-1:0]),
                                                .pc({fetch_addr_p1_f[pt.BTB_ADDR_HI+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE+pt.BTB_BTAG_SIZE:pt.BTB_ADDR_HI+1]}));
       end
 
@@ -631,10 +631,10 @@ assign use_fa_plus = (~bht_dir_f[0] & ~fetch_start_f[0] & ~btb_rd_pc4_f);
    logic [pt.BHT_ADDR_HI:pt.BHT_ADDR_LO] bht_rd_addr_f, bht_rd_addr_p1_f, bht_wr_addr0, bht_wr_addr2;
 
    logic [pt.BHT_ADDR_HI:pt.BHT_ADDR_LO] mp_hashed, br0_hashed_wb, bht_rd_addr_hashed_f, bht_rd_addr_hashed_p1_f;
-   el2_btb_ghr_hash #(.pt(pt)) mpghrhs  (.hashin(exu_mp_addr[pt.BTB_ADDR_HI:pt.BTB_ADDR_LO]), .ghr(exu_mp_eghr[pt.BHT_GHR_SIZE-1:0]), .hash(mp_hashed[pt.BHT_ADDR_HI:pt.BHT_ADDR_LO]));
-   el2_btb_ghr_hash #(.pt(pt)) br0ghrhs (.hashin(dec_tlu_br0_addr_wb[pt.BTB_ADDR_HI:pt.BTB_ADDR_LO]), .ghr(exu_i0_br_fghr_wb[pt.BHT_GHR_SIZE-1:0]), .hash(br0_hashed_wb[pt.BHT_ADDR_HI:pt.BHT_ADDR_LO]));
-   el2_btb_ghr_hash #(.pt(pt)) fghrhs (.hashin(btb_rd_addr_f[pt.BTB_ADDR_HI:pt.BTB_ADDR_LO]), .ghr(fghr[pt.BHT_GHR_SIZE-1:0]), .hash(bht_rd_addr_hashed_f[pt.BHT_ADDR_HI:pt.BHT_ADDR_LO]));
-   el2_btb_ghr_hash #(.pt(pt)) fghrhs_p1 (.hashin(btb_rd_addr_p1_f[pt.BTB_ADDR_HI:pt.BTB_ADDR_LO]), .ghr(fghr[pt.BHT_GHR_SIZE-1:0]), .hash(bht_rd_addr_hashed_p1_f[pt.BHT_ADDR_HI:pt.BHT_ADDR_LO]));
+   el2_btb_ghr_hash #(.A(A)) mpghrhs  (.hashin(exu_mp_addr[pt.BTB_ADDR_HI:pt.BTB_ADDR_LO]), .ghr(exu_mp_eghr[pt.BHT_GHR_SIZE-1:0]), .hash(mp_hashed[pt.BHT_ADDR_HI:pt.BHT_ADDR_LO]));
+   el2_btb_ghr_hash #(.A(A)) br0ghrhs (.hashin(dec_tlu_br0_addr_wb[pt.BTB_ADDR_HI:pt.BTB_ADDR_LO]), .ghr(exu_i0_br_fghr_wb[pt.BHT_GHR_SIZE-1:0]), .hash(br0_hashed_wb[pt.BHT_ADDR_HI:pt.BHT_ADDR_LO]));
+   el2_btb_ghr_hash #(.A(A)) fghrhs (.hashin(btb_rd_addr_f[pt.BTB_ADDR_HI:pt.BTB_ADDR_LO]), .ghr(fghr[pt.BHT_GHR_SIZE-1:0]), .hash(bht_rd_addr_hashed_f[pt.BHT_ADDR_HI:pt.BHT_ADDR_LO]));
+   el2_btb_ghr_hash #(.A(A)) fghrhs_p1 (.hashin(btb_rd_addr_p1_f[pt.BTB_ADDR_HI:pt.BTB_ADDR_LO]), .ghr(fghr[pt.BHT_GHR_SIZE-1:0]), .hash(bht_rd_addr_hashed_p1_f[pt.BHT_ADDR_HI:pt.BHT_ADDR_LO]));
 
    assign bht_wr_addr0[pt.BHT_ADDR_HI:pt.BHT_ADDR_LO] = mp_hashed[pt.BHT_ADDR_HI:pt.BHT_ADDR_LO];
    assign bht_wr_addr2[pt.BHT_ADDR_HI:pt.BHT_ADDR_LO] = br0_hashed_wb[pt.BHT_ADDR_HI:pt.BHT_ADDR_LO];

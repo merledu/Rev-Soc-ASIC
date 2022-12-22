@@ -18,7 +18,7 @@
 module el2_mem
 import el2_pkg::*;
 #(
-`include "el2_param.vh"
+parameter A=0
  )
 (
    input logic         clk,
@@ -99,7 +99,7 @@ import el2_pkg::*;
 
    // DCCM Instantiation
    if (pt.DCCM_ENABLE == 1) begin: Gen_dccm_enable
-      el2_lsu_dccm_mem #(.pt(pt)) dccm (
+      el2_lsu_dccm_mem #(.A(A)) dccm (
          .clk_override(dccm_clk_override),
          .*
       );
@@ -109,7 +109,7 @@ import el2_pkg::*;
    end
 
 if ( pt.ICACHE_ENABLE ) begin: icache
-   el2_ifu_ic_mem #(.pt(pt)) icm  (
+   el2_ifu_ic_mem #(.A(A)) icm  (
       .clk_override(icm_clk_override),
       .*
    );
@@ -124,7 +124,7 @@ end // else: !if( pt.ICACHE_ENABLE )
 
 
 if (pt.ICCM_ENABLE) begin : iccm
-   el2_ifu_iccm_mem  #(.pt(pt)) iccm (.*,
+   el2_ifu_iccm_mem  #(.A(A)) iccm (.*,
                   .clk_override(icm_clk_override),
                   .iccm_rw_addr(iccm_rw_addr[pt.ICCM_BITS-1:1]),
                   .iccm_rd_data(iccm_rd_data[63:0])

@@ -26,7 +26,7 @@
 module el2_dec_tlu_ctl
 import el2_pkg::*;
 #(
-`include "el2_param.vh"
+parameter A=0
  )
   (
    input logic clk,
@@ -491,7 +491,7 @@ import el2_pkg::*;
    logic  [3:0] ifu_mscause ;
    logic        ifu_ic_error_start_f, ifu_iccm_rd_ecc_single_err_f;
 
-   el2_dec_timer_ctl  #(.pt(pt)) int_timers(.*);
+   el2_dec_timer_ctl  #(.A(A)) int_timers(.*);
    // end of internal timers
 
    assign clk_override = dec_tlu_dec_clk_override;
@@ -2789,7 +2789,7 @@ assign dec_csr_rddata_d[31:0] = ( ({32{csr_misa}}      & 32'h40001104) |
 endmodule // el2_dec_tlu_ctl
 
 module el2_dec_timer_ctl #(
-`include "el2_param.vh"
+parameter A=0
  )
   (
    input logic clk,

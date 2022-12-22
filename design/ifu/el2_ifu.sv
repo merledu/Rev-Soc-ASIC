@@ -22,7 +22,7 @@
 module el2_ifu
 import el2_pkg::*;
 #(
-`include "el2_param.vh"
+parameter A=0
  )
   (
    input logic free_l2clk,                   // Clock always.                  Through one clock header.  For flops with    second header built in.
@@ -242,12 +242,12 @@ import el2_pkg::*;
 
 
    // fetch control
-   el2_ifu_ifc_ctl #(.pt(pt)) ifc (.*
+   el2_ifu_ifc_ctl #(.A(A)) ifc (.*
                     );
 
    // branch predictor
    if (pt.BTB_ENABLE==1) begin  : bpred
-      el2_ifu_bp_ctl #(.pt(pt)) bp (.*);
+      el2_ifu_bp_ctl #(.A(A)) bp (.*);
    end
    else begin : bpred
       assign ifu_bp_hit_taken_f = '0;
@@ -284,13 +284,13 @@ import el2_pkg::*;
 
    // aligner
 
-   el2_ifu_aln_ctl #(.pt(pt)) aln (
+   el2_ifu_aln_ctl #(.A(A)) aln (
                                     .*
                                     );
 
 
    // icache
-   el2_ifu_mem_ctl #(.pt(pt)) mem_ctl
+   el2_ifu_mem_ctl #(.A(A)) mem_ctl
      (.*,
       .ic_data_f(ic_data_f[31:0])
       );
